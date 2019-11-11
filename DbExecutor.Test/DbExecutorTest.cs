@@ -1,6 +1,6 @@
 ﻿using System;
 using System.Data;
-using System.Data.SqlServerCe;
+using System.Data.SQLite;
 using System.Linq;
 using Codeplex.Data;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
@@ -16,35 +16,35 @@ namespace DbExecutorTest
         [ClassInitialize]
         public static void Setup(TestContext tc)
         {
-            var connStr = new CSharpStructure().Database.Connection.ConnectionString;
-            connectionFactory = () => new SqlCeConnection(connStr);
+            //var connStr = new CSharpStructure().Database.Connection.ConnectionString;
+            var connStr = new SQLConnectionFactory().GetConnection();
+            connectionFactory = () => new SQLiteConnection(connStr);
         }
 
         [TestMethod]
         public void ExecuteReader()
         {
             var rs = DbExecutor.ExecuteReader(connectionFactory(),
-                    "select * from Methods where TypeId = @TypeId", new { TypeId = 2 })
-                .Select(dr => new Method
-                {
-                    Name = (string)dr["Name"],
-                    MethodId = (int)dr["MethodId"],
-                })
-                .ToArray();
-            rs.Length.Is(3);
-            rs.Select(x => x.Name).Is("StartsWith", "EndsWith", "Contains");
+                    "select * from sqlite_master where type=@TypeId ", new { TypeId = "table" }).ToArray();
+            rs.Length.Is(6);
 
             using (var exec = new DbExecutor(connectionFactory()))
             {
-                var ri = exec.ExecuteReader("select * from Methods where TypeId = @TypeId", new { TypeId = 2 })
-                    .Select(dr => new Method
+                //select name from sqlite_master where type='table';
+                var ri = exec.ExecuteReader("select * from sqlite_master where type=@TypeId ", new { TypeId = "table" })
+                    .Select(dr => 
                     {
-                        Name = (string)dr["Name"],
-                        MethodId = (int)dr["MethodId"],
+                        var x = new SqliteMaster();
+                        x.name = (string)dr["name"];
+                        x.rootpage = (int)dr["rootpage"];
+                        x.sql = (string)dr["sql"];
+                        x.tbl_name = (string)dr["tbl_name"];
+                        x.type = (string)dr["type"];
+                        return x;
                     })
                     .ToArray();
-                ri.Length.Is(3);
-                ri.Select(x => x.Name).Is("StartsWith", "EndsWith", "Contains");
+                ri.Length.Is(6);
+                ri.Select(x => x.name).Is("employees", "departments", "dept_emp", "dept_manager", "titles", "salaries");
             }
         }
 
@@ -52,27 +52,37 @@ namespace DbExecutorTest
         public void ExecuteReaderDynamic()
         {
             var rs = DbExecutor.ExecuteReaderDynamic(connectionFactory(),
-                    "select * from Methods where TypeId = @TypeId", new { TypeId = 2 })
-                .Select(d => new Method
+                    "select * from sqlite_master where type = @TypeId", new { TypeId = "table" })
+                .Select(d =>
                 {
-                    Name = d.Name,
-                    MethodId = d.MethodId,
+                    var x = new SqliteMaster();
+                    x.name = (string)d.name;
+                    x.rootpage = (int)d.rootpage;
+                    x.sql = (string)d.sql;
+                    x.tbl_name = (string)d.tbl_name;
+                    x.type = (string)d.type;
+                    return x;
                 })
                 .ToArray();
-            rs.Length.Is(3);
-            rs.Select(x => x.Name).Is("StartsWith", "EndsWith", "Contains");
+            rs.Length.Is(6);
+            rs.Select(x => x.name).Is("employees", "departments", "dept_emp", "dept_manager", "titles", "salaries");
 
             using (var exec = new DbExecutor(connectionFactory()))
             {
-                var ri = exec.ExecuteReaderDynamic("select * from Methods where TypeId = @TypeId", new { TypeId = 2 })
-                    .Select(d => new Method
+                var ri = exec.ExecuteReaderDynamic("select * from sqlite_master where type = @TypeId", new { TypeId = "table" })
+                    .Select(d =>
                     {
-                        Name = d.Name,
-                        MethodId = d.MethodId,
+                        var x = new SqliteMaster();
+                        x.name = (string)d.name;
+                        x.rootpage = (int)d.rootpage;
+                        x.sql = (string)d.sql;
+                        x.tbl_name = (string)d.tbl_name;
+                        x.type = (string)d.type;
+                        return x;
                     })
                     .ToArray();
-                ri.Length.Is(3);
-                ri.Select(x => x.Name).Is("StartsWith", "EndsWith", "Contains");
+                ri.Length.Is(6);
+                rs.Select(x => x.name).Is("employees", "departments", "dept_emp", "dept_manager", "titles", "salaries");
             }
         }
 
@@ -82,18 +92,18 @@ namespace DbExecutorTest
             using (var exec = new DbExecutor(connectionFactory(), IsolationLevel.ReadCommitted))
             {
                 var affected = exec.ExecuteNonQuery(
-                    "insert into Types(Name) values(@Name)",
-                    new { Name = "NewTypeEXECUTE" });
+                    "insert into Departments(dept_no, dept_name) values(@dept_no, @dept_name)",
+                    new { dept_no = "d1", dept_name = "dept_name" });
                 affected.Is(1);
-
-                var f = exec.Select<Type>("select top 1 * from Types order by TypeId desc").First();
-                f.Is(t => t.Name == "NewTypeEXECUTE");
+                
+                var f = exec.Select<Departments>("select * from Departments order by dept_no desc").First();
+                f.Is(t => t.dept_name == "dept_name");
 
                 // Transaction Uncommit
             }
 
             // Transaction Rollback test.
-            var xs = DbExecutor.Select<Type>(connectionFactory(), "select * from Types where TypeId = 5").ToArray();
+            var xs = DbExecutor.Select<Departments>(connectionFactory(), "select * from Departments where dept_no = 'd1'").ToArray();
             xs.Count().Is(0);
         }
 
@@ -102,17 +112,17 @@ namespace DbExecutorTest
         {
             using (var exec = new DbExecutor(connectionFactory()))
             {
-                exec.ExecuteScalar<int>("select max(TypeId) from Types where TypeId <= @TypeId", new { TypeId = 2 })
+                exec.ExecuteScalar<long>("select @TypeId", new { TypeId = 2 })
                     .Is(2);
-                exec.ExecuteScalar<int?>("select TypeId from Types where TypeId = -1000")
-                    .IsNull();
+
+                exec.ExecuteScalar<object>("select null").Is(DBNull.Value);
             }
 
-            DbExecutor.ExecuteScalar<DateTime>(connectionFactory(), "select GETDATE()")
-                .Day.Is(DateTime.Now.Day);
+            DbExecutor.ExecuteScalar<string>(connectionFactory(), "select date('now')")
+                .Is(DateTime.Now.ToString("yyyy-MM-dd"));
 
-            DbExecutor.ExecuteScalar<int?>(connectionFactory(), "select TypeId from Types where TypeId = -1000")
-                .IsNull();
+            DbExecutor.ExecuteScalar<object>(connectionFactory(), "select null")
+                .Is(DBNull.Value);
         }
 
         [TestMethod]
@@ -120,21 +130,22 @@ namespace DbExecutorTest
         {
             using (var exec = new DbExecutor(connectionFactory()))
             {
-                var r = exec.Select<Type>("select * from Types where TypeId <= @TypeId", new { TypeId = 2 }).ToArray();
-                r.Length.Is(2);
-                r[0].Is(t => t.TypeId == 1 && t.Name == "Int32");
-                r[1].Is(t => t.TypeId == 2 && t.Name == "String");
+                var r = exec.Select<SqliteMaster>("select * from sqlite_master where type = @TypeId", new { TypeId = "table" }).ToArray();
+                r.Length.Is(6);
+                r[0].Is(t => t.tbl_name == "employees" && t.name == t.tbl_name);
+                r[1].Is(t => t.tbl_name == "departments" && t.name == t.tbl_name);
+                r[2].Is(t => t.tbl_name == "dept_emp" && t.name == t.tbl_name);
+                r[3].Is(t => t.tbl_name == "dept_manager" && t.name == t.tbl_name);
+                r[4].Is(t => t.tbl_name == "titles" && t.name == t.tbl_name);
+                r[5].Is(t => t.tbl_name == "salaries" && t.name == t.tbl_name);
             }
 
-            var methods = DbExecutor.Select<Method>(connectionFactory(), @"
-                    select M.*
-                    from Methods M
-                    join Types T on M.TypeId = T.TypeId
-                    where T.Name = @TypeName
-                    ", new { TypeName = "String" })
+            var methods = DbExecutor.Select<SqliteMaster>(connectionFactory(), @"
+                    select * from sqlite_master where type = @TypeId
+                    ", new { TypeId = "table" })
                 .ToArray();
-            methods.Length.Is(3);
-            methods.Select(x => x.Name).Is("StartsWith", "EndsWith", "Contains");
+            methods.Length.Is(6);
+            methods.Select(x => x.name).Is("employees", "departments", "dept_emp", "dept_manager", "titles", "salaries");
         }
 
         [TestMethod]
@@ -142,36 +153,35 @@ namespace DbExecutorTest
         {
             using (var exec = new DbExecutor(connectionFactory()))
             {
-                var r = exec.SelectDynamic("select * from Types where TypeId <= @TypeId", new { TypeId = 2 }).ToArray();
-                r.Length.Is(2);
-                r.Select(x => x.TypeId).Is(1, 2);
-                r.Select(x => x.Name).Is("Int32", "String");
+                var r = exec.SelectDynamic("select * from sqlite_master where type = @TypeId", new { TypeId = "table" }).ToArray();
+                r.Length.Is(6);
+                r.Select(x => x.rootpage).Is(2, 4, 6, 8, 10, 12);
+                r.Select(x => x.name).Is("employees", "departments", "dept_emp", "dept_manager", "titles", "salaries");
             }
 
             var methods = DbExecutor.SelectDynamic(connectionFactory(), @"
-                    select M.*
-                    from Methods M
-                    join Types T on M.TypeId = T.TypeId
-                    where T.Name = @TypeName
-                    ", new { TypeName = "String" })
+                    select * from sqlite_master where type = @TypeId
+                    ", new { TypeId = "table" })
                 .ToArray();
-            methods.Length.Is(3);
-            methods.Select(x => x.Name).Is("StartsWith", "EndsWith", "Contains");
+            methods.Length.Is(6);
+            methods.Select(x => x.name).Is("employees", "departments", "dept_emp", "dept_manager", "titles", "salaries");
         }
 
         [TestMethod]
         public void Delete()
         {
+            DbExecutor.Delete(connectionFactory(), "Departments", new { dept_no = "2" });
+            DbExecutor.Insert(connectionFactory(), "Departments", new { dept_no = "2", dept_name = "name2" });
             using (var exec = new DbExecutor(connectionFactory(), IsolationLevel.ReadCommitted))
             {
-                exec.Select<Type>("select * from Types")
-                    .Any(x => x.TypeId == 2)
+                exec.Select<Departments>("select * from Departments")
+                    .Any(x => x.dept_no == "2")
                     .Is(true);
 
-                exec.Delete("Types", new { TypeId = 2 });
+                exec.Delete("Departments", new { dept_no = "2" });
 
-                exec.Select<Type>("select * from Types")
-                    .Any(x => x.TypeId == 2)
+                exec.Select<Departments>("select * from Departments")
+                    .Any(x => x.dept_no == "2")
                     .Is(false);
             }
         }
@@ -179,23 +189,25 @@ namespace DbExecutorTest
         [TestMethod]
         public void Insert()
         {
+            DbExecutor.Delete(connectionFactory(), "Departments", new { dept_no = "1" });
+            DbExecutor.Delete(connectionFactory(), "Departments", new { dept_no = "2" });
             using (var exec = new DbExecutor(connectionFactory(), IsolationLevel.ReadCommitted))
             {
-                exec.Insert("Types", new { Name = "NewType1" });
+                exec.Insert("Departments", new { dept_no = "1", dept_name = "name1" });
                 exec.TransactionComplete(); // Transaction Commit
             }
-            DbExecutor.Insert(connectionFactory(), "Types", new { Name = "NewType2" });
+            DbExecutor.Insert(connectionFactory(), "Departments", new { dept_no = "2", dept_name = "name2" });
 
-            DbExecutor.Select<Type>(connectionFactory(),
-                    "select * from Types where Name like @Name", new { Name = "NewType%" })
+            DbExecutor.Select<Departments>(connectionFactory(),
+                    "select * from Departments where dept_name like @dept_name", new { dept_name = "name%" })
                 .Count()
                 .Is(2);
 
-            DbExecutor.Delete(connectionFactory(), "Types", new { Name = "NewType1" });
-            DbExecutor.Delete(connectionFactory(), "Types", new { Name = "NewType2" });
+            DbExecutor.Delete(connectionFactory(), "Departments", new { dept_name = "name1" });
+            DbExecutor.Delete(connectionFactory(), "Departments", new { dept_name = "name2" });
 
-            DbExecutor.Select<Type>(connectionFactory(),
-                 "select * from Types where Name like @Name", new { Name = "NewType%" })
+            DbExecutor.Select<Departments>(connectionFactory(),
+                 "select * from Departments where dept_name like @dept_name", new { dept_name = "name%" })
              .Count()
              .Is(0);
         }
@@ -203,30 +215,33 @@ namespace DbExecutorTest
         [TestMethod]
         public void Update()
         {
+            DbExecutor.Delete(connectionFactory(), "Departments", new { dept_no = "1" });
+            DbExecutor.Insert(connectionFactory(), "Departments", new { dept_no = "1", dept_name = "name1" });
+
             using (var exec = new DbExecutor(connectionFactory(), IsolationLevel.ReadCommitted))
             {
-                exec.Select<Type>("select * from Types where TypeId = 1")
+                exec.Select<Departments>("select * from Departments where dept_no = 1")
                     .First()
-                    .Is(x => x.Name == "Int32");
+                    .Is(x => x.dept_name == "name1");
 
-                exec.Update("Types", new { Name = "UpdateName" }, new { TypeId = 1 });
+                exec.Update("Departments", new { dept_name = "UpdateName" }, new { dept_no = 1 });
 
-                exec.Select<Type>("select * from Types where TypeId = 1")
+                exec.Select<Departments>("select * from Departments where dept_no = 1")
                     .First()
-                    .Is(x => x.Name == "UpdateName");
+                    .Is(x => x.dept_name == "UpdateName");
             }
 
-            DbExecutor.Select<Type>(connectionFactory(), "select * from Types where TypeId = 1")
+            DbExecutor.Select<Departments>(connectionFactory(), "select * from Departments where dept_no = 1")
                 .First()
-                .Is(x => x.Name == "Int32");
+                .Is(x => x.dept_name == "name1");
 
-            DbExecutor.Update(connectionFactory(), "Types", new { Name = "UpdateName" }, new { TypeId = 1 });
+            DbExecutor.Update(connectionFactory(), "Departments", new { dept_name = "UpdateName" }, new { dept_no = 1 });
 
-            DbExecutor.Select<Type>(connectionFactory(), "select * from Types where TypeId = 1")
+            DbExecutor.Select<Departments>(connectionFactory(), "select * from Departments where dept_no = 1")
                 .First()
-                .Is(x => x.Name == "UpdateName");
+                .Is(x => x.dept_name == "UpdateName");
 
-            DbExecutor.Update(connectionFactory(), "Types", new { Name = "Int32" }, new { TypeId = 1 });
+            DbExecutor.Update(connectionFactory(), "Departments", new { dept_name = "Int32" }, new { dept_no = 1 });
         }
     }
 }
