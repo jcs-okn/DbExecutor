@@ -1,6 +1,5 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.Diagnostics.Contracts;
 using System.Linq;
 
 namespace Codeplex.Data.Internal
@@ -10,14 +9,9 @@ namespace Codeplex.Data.Internal
         public static IKeyIndexed<TKey, TElement> Create<TSource, TKey, TElement>(
             IEnumerable<TSource> source, Func<TSource, TKey> keySelector, Func<TSource, TElement> elementSelector)
         {
-            Contract.Requires<ArgumentNullException>(source != null);
-            Contract.Requires<ArgumentNullException>(keySelector != null);
-            Contract.Requires<ArgumentNullException>(elementSelector != null);
-
             return new ReadOnlyKeyIndexedCollection<TKey, TElement>(source.ToDictionary(x => keySelector(x), x => elementSelector(x)));
         }
 
-        [Pure]
         class ReadOnlyKeyIndexedCollection<TKey, TElement> : IKeyIndexed<TKey, TElement>
         {
             readonly Dictionary<TKey, TElement> source;

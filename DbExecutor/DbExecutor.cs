@@ -1,7 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Data;
-using System.Diagnostics.Contracts;
 using System.Dynamic;
 using System.Linq;
 using Codeplex.Data.Internal;
@@ -24,8 +23,6 @@ namespace Codeplex.Data
         /// <param name="parameterSymbol">Command parameter symbol. SqlServer = '@', MySql = '?', Oracle = ':'</param>
         public DbExecutor(IDbConnection connection, char parameterSymbol = '@')
         {
-            Contract.Requires<ArgumentNullException>(connection != null);
-
             this.connection = connection;
             this.parameterSymbol = parameterSymbol;
             this.isUseTransaction = false;
@@ -37,8 +34,6 @@ namespace Codeplex.Data
         /// <param name="parameterSymbol">Command parameter symbol. SqlServer = '@', MySql = '?', Oracle = ':'</param>
         public DbExecutor(IDbConnection connection, IsolationLevel isolationLevel, char parameterSymbol = '@')
         {
-            Contract.Requires<ArgumentNullException>(connection != null);
-
             this.connection = connection;
             this.parameterSymbol = parameterSymbol;
             this.isUseTransaction = true;
@@ -53,9 +48,6 @@ namespace Codeplex.Data
         /// <returns>Setuped IDbCommand.</returns>
         protected IDbCommand PrepareExecute(string query, CommandType commandType, object parameter, object extraParameter = null)
         {
-            Contract.Requires<ArgumentException>(!String.IsNullOrEmpty(query));
-            Contract.Ensures(Contract.Result<IDbCommand>() != null);
-
             if (connection.State != ConnectionState.Open) connection.Open();
             if (transaction == null && isUseTransaction) transaction = connection.BeginTransaction(isolationLevel);
 
@@ -69,7 +61,6 @@ namespace Codeplex.Data
                 {
                     if (!p.IsReadable) continue;
 
-                    Contract.Assume(parameter != null);
                     var param = command.CreateParameter();
                     param.ParameterName = p.Name;
                     param.Value = p.GetValueDirect(parameter);
@@ -82,7 +73,6 @@ namespace Codeplex.Data
                 {
                     if (!p.IsReadable) continue;
 
-                    Contract.Assume(extraParameter != null);
                     var param = command.CreateParameter();
                     param.ParameterName = "__extra__" + p.Name;
                     param.Value = p.GetValueDirect(extraParameter);
@@ -112,9 +102,6 @@ namespace Codeplex.Data
         /// <returns>Query results.</returns>
         public IEnumerable<IDataRecord> ExecuteReader(string query, object parameter = null, CommandType commandType = CommandType.Text, CommandBehavior commandBehavior = CommandBehavior.Default)
         {
-            Contract.Requires<ArgumentException>(!String.IsNullOrEmpty(query));
-            Contract.Ensures(Contract.Result<IEnumerable<IDataRecord>>() != null);
-
             return YieldReaderHelper(query, parameter, commandType, commandBehavior);
         }
 
@@ -136,9 +123,6 @@ namespace Codeplex.Data
         /// <returns>Query results. Result type is DynamicDataRecord.</returns>
         public IEnumerable<dynamic> ExecuteReaderDynamic(string query, object parameter = null, CommandType commandType = CommandType.Text, CommandBehavior commandBehavior = CommandBehavior.Default)
         {
-            Contract.Requires<ArgumentException>(!String.IsNullOrEmpty(query));
-            Contract.Ensures(Contract.Result<IEnumerable<dynamic>>() != null);
-
             return YieldReaderDynamicHelper(query, parameter, commandType, commandBehavior);
         }
 
@@ -149,8 +133,6 @@ namespace Codeplex.Data
         /// <returns>Rows affected.</returns>
         public int ExecuteNonQuery(string query, object parameter = null, CommandType commandType = CommandType.Text)
         {
-            Contract.Requires<ArgumentException>(!String.IsNullOrEmpty(query));
-
             using (var command = PrepareExecute(query, commandType, parameter))
             {
                 return command.ExecuteNonQuery();
@@ -165,8 +147,6 @@ namespace Codeplex.Data
         /// <returns>Query results of first column, first row.</returns>
         public T ExecuteScalar<T>(string query, object parameter = null, CommandType commandType = CommandType.Text)
         {
-            Contract.Requires<ArgumentException>(!String.IsNullOrEmpty(query));
-
             using (var command = PrepareExecute(query, commandType, parameter))
             {
                 return (T)command.ExecuteScalar();
@@ -181,9 +161,6 @@ namespace Codeplex.Data
         /// <returns>Mapped instances.</returns>
         public IEnumerable<T> Select<T>(string query, object parameter = null, CommandType commandType = CommandType.Text) where T : new()
         {
-            Contract.Requires<ArgumentException>(!String.IsNullOrEmpty(query));
-            Contract.Ensures(Contract.Result<IEnumerable<T>>() != null);
-
             var accessors = AccessorCache.Lookup(typeof(T));
             return ExecuteReader(query, parameter, commandType, CommandBehavior.SequentialAccess)
                 .Select(dr =>
@@ -209,9 +186,6 @@ namespace Codeplex.Data
         /// <returns>Mapped results(dynamic type is ExpandoObject).</returns>
         public IEnumerable<dynamic> SelectDynamic(string query, object parameter = null, CommandType commandType = CommandType.Text)
         {
-            Contract.Requires<ArgumentException>(!String.IsNullOrEmpty(query));
-            Contract.Ensures(Contract.Result<IEnumerable<dynamic>>() != null);
-
             return ExecuteReader(query, parameter, commandType, CommandBehavior.SequentialAccess)
                 .Select(dr =>
                 {
@@ -231,9 +205,6 @@ namespace Codeplex.Data
         /// <returns>Rows affected.</returns>
         public int Insert(string tableName, object insertItem)
         {
-            Contract.Requires<ArgumentException>(!String.IsNullOrEmpty(tableName));
-            Contract.Requires<ArgumentNullException>(insertItem != null);
-
             var propNames = AccessorCache.Lookup(insertItem.GetType())
                 .Where(p => p.IsReadable)
                 .ToArray();
@@ -242,7 +213,6 @@ namespace Codeplex.Data
 
             var query = string.Format("insert into {0} ({1}) values ({2})", tableName, column, data);
 
-            Contract.Assume(query.Length > 0);
             return ExecuteNonQuery(query, insertItem);
         }
 
@@ -253,10 +223,6 @@ namespace Codeplex.Data
         /// <returns>Rows affected.</returns>
         public int Update(string tableName, object updateItem, object whereCondition)
         {
-            Contract.Requires<ArgumentException>(!String.IsNullOrEmpty(tableName));
-            Contract.Requires<ArgumentNullException>(whereCondition != null);
-            Contract.Requires<ArgumentNullException>(updateItem != null);
-
             var update = string.Join(", ", AccessorCache.Lookup(updateItem.GetType())
                 .Where(p => p.IsReadable)
                 .Select(p => p.Name + " = " + parameterSymbol + p.Name));
@@ -266,7 +232,6 @@ namespace Codeplex.Data
 
             var query = string.Format("update {0} set {1} where {2}", tableName, update, where);
 
-            Contract.Assume(query.Length > 0);
             using (var command = PrepareExecute(query, CommandType.Text, updateItem, whereCondition))
             {
                 return command.ExecuteNonQuery();
@@ -279,15 +244,11 @@ namespace Codeplex.Data
         /// <returns>Rows affected.</returns>
         public int Delete(string tableName, object whereCondition)
         {
-            Contract.Requires<ArgumentException>(!String.IsNullOrEmpty(tableName));
-            Contract.Requires<ArgumentNullException>(whereCondition != null);
-
             var where = string.Join(" and ", AccessorCache.Lookup(whereCondition.GetType())
                 .Select(p => p.Name + " = " + parameterSymbol + p.Name));
 
             var query = string.Format("delete from {0} where {1}", tableName, where);
 
-            Contract.Assume(query.Length > 0);
             return ExecuteNonQuery(query, whereCondition);
         }
 

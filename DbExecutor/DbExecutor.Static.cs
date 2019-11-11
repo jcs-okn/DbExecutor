@@ -1,7 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Data;
-using System.Diagnostics.Contracts;
 
 namespace Codeplex.Data
 {
@@ -28,10 +27,6 @@ namespace Codeplex.Data
         public static IEnumerable<IDataRecord> ExecuteReader(IDbConnection connection, string query,
             object parameter = null, CommandType commandType = CommandType.Text, CommandBehavior commandBehavior = CommandBehavior.Default)
         {
-            Contract.Requires<ArgumentNullException>(connection != null);
-            Contract.Requires<ArgumentException>(!String.IsNullOrEmpty(query));
-            Contract.Ensures(Contract.Result<IEnumerable<IDataRecord>>() != null);
-
             return ExecuteReaderHelper(connection, query, parameter, commandType, commandBehavior);
         }
 
@@ -56,10 +51,6 @@ namespace Codeplex.Data
         public static IEnumerable<dynamic> ExecuteReaderDynamic(IDbConnection connection, string query,
             object parameter = null, CommandType commandType = CommandType.Text, CommandBehavior commandBehavior = CommandBehavior.Default)
         {
-            Contract.Requires<ArgumentNullException>(connection != null);
-            Contract.Requires<ArgumentException>(!String.IsNullOrEmpty(query));
-            Contract.Ensures(Contract.Result<IEnumerable<dynamic>>() != null);
-
             return ExecuteReaderDynamicHelper(connection, query, parameter, commandType, commandBehavior);
         }
 
@@ -72,9 +63,6 @@ namespace Codeplex.Data
         public static int ExecuteNonQuery(IDbConnection connection, string query,
             object parameter = null, CommandType commandType = CommandType.Text)
         {
-            Contract.Requires<ArgumentNullException>(connection != null);
-            Contract.Requires<ArgumentException>(!String.IsNullOrEmpty(query));
-
             using (var exec = new DbExecutor(connection))
             {
                 return exec.ExecuteNonQuery(query, parameter, commandType);
@@ -91,9 +79,6 @@ namespace Codeplex.Data
         public static T ExecuteScalar<T>(IDbConnection connection, string query,
             object parameter = null, CommandType commandType = CommandType.Text)
         {
-            Contract.Requires<ArgumentNullException>(connection != null);
-            Contract.Requires<ArgumentException>(!String.IsNullOrEmpty(query));
-
             using (var exec = new DbExecutor(connection))
             {
                 return exec.ExecuteScalar<T>(query, parameter, commandType);
@@ -123,10 +108,6 @@ namespace Codeplex.Data
             object parameter = null, CommandType commandType = CommandType.Text)
             where T : new()
         {
-            Contract.Requires<ArgumentNullException>(connection != null);
-            Contract.Requires<ArgumentException>(!String.IsNullOrEmpty(query));
-            Contract.Ensures(Contract.Result<IEnumerable<T>>() != null);
-
             return SelectHelper<T>(connection, query, parameter, commandType);
         }
 
@@ -151,10 +132,6 @@ namespace Codeplex.Data
         public static IEnumerable<dynamic> SelectDynamic(IDbConnection connection, string query,
             object parameter = null, CommandType commandType = CommandType.Text)
         {
-            Contract.Requires<ArgumentNullException>(connection != null);
-            Contract.Requires<ArgumentException>(!String.IsNullOrEmpty(query));
-            Contract.Ensures(Contract.Result<IEnumerable<dynamic>>() != null);
-
             return SelectDynamicHelper(connection, query, parameter, commandType);
         }
 
@@ -166,10 +143,6 @@ namespace Codeplex.Data
         /// <returns>Rows affected.</returns>
         public static int Insert(IDbConnection connection, string tableName, object insertItem, char parameterSymbol = '@')
         {
-            Contract.Requires<ArgumentNullException>(connection != null);
-            Contract.Requires<ArgumentException>(!String.IsNullOrEmpty(tableName));
-            Contract.Requires<ArgumentNullException>(insertItem != null);
-
             using (var exec = new DbExecutor(connection, parameterSymbol))
             {
                 return exec.Insert(tableName, insertItem);
@@ -185,11 +158,6 @@ namespace Codeplex.Data
         /// <returns>Rows affected.</returns>
         public static int Update(IDbConnection connection, string tableName, object updateItem, object whereCondition, char parameterSymbol = '@')
         {
-            Contract.Requires<ArgumentNullException>(connection != null);
-            Contract.Requires<ArgumentException>(!String.IsNullOrEmpty(tableName));
-            Contract.Requires<ArgumentNullException>(whereCondition != null);
-            Contract.Requires<ArgumentNullException>(updateItem != null);
-
             using (var exec = new DbExecutor(connection, parameterSymbol))
             {
                 return exec.Update(tableName, updateItem, whereCondition);
@@ -204,10 +172,6 @@ namespace Codeplex.Data
         /// <returns>Rows affected.</returns>
         public static int Delete(IDbConnection connection, string tableName, object whereCondition, char parameterSymbol = '@')
         {
-            Contract.Requires<ArgumentNullException>(connection != null);
-            Contract.Requires<ArgumentException>(!String.IsNullOrEmpty(tableName));
-            Contract.Requires<ArgumentNullException>(whereCondition != null);
-
             using (var exec = new DbExecutor(connection, parameterSymbol))
             {
                 return exec.Delete(tableName, whereCondition);

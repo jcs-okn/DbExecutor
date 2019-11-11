@@ -1,6 +1,5 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.Diagnostics.Contracts;
 using System.Linq;
 using System.Reflection;
 
@@ -11,12 +10,8 @@ namespace Codeplex.Data.Internal
         static readonly Dictionary<Type, IKeyIndexed<string, IMemberAccessor>>
             cache = new Dictionary<Type, IKeyIndexed<string, IMemberAccessor>>();
 
-        [Pure]
         public static IKeyIndexed<string, ExpressionAccessor> Lookup(Type targetType)
         {
-            Contract.Requires<ArgumentNullException>(targetType != null);
-            Contract.Ensures(Contract.Result<IKeyIndexed<string, ExpressionAccessor>>() != null);
-
             lock (cache)
             {
                 IKeyIndexed<string, IMemberAccessor> accessors;
@@ -32,7 +27,6 @@ namespace Codeplex.Data.Internal
                     cache.Add(targetType, accessors);
                 };
 
-                Contract.Assume(accessors != null);
                 return (IKeyIndexed<string, ExpressionAccessor>)accessors;
             }
         }

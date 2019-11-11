@@ -1,5 +1,4 @@
 ﻿using System;
-using System.Diagnostics.Contracts;
 using System.Linq.Expressions;
 using System.Reflection;
 
@@ -19,8 +18,6 @@ namespace Codeplex.Data.Internal
 
         public ExpressionAccessor(PropertyInfo info)
         {
-            Contract.Requires<ArgumentNullException>(info != null);
-
             this.Name = info.Name;
             this.DeclaringType = info.DeclaringType;
             this.GetValueDirect = (info.GetGetMethod(false) != null) ? CreateGetValue(DeclaringType, Name) : null;
@@ -29,8 +26,6 @@ namespace Codeplex.Data.Internal
 
         public ExpressionAccessor(FieldInfo info)
         {
-            Contract.Requires<ArgumentNullException>(info != null);
-
             this.Name = info.Name;
             this.DeclaringType = info.DeclaringType;
             this.GetValueDirect = CreateGetValue(DeclaringType, Name);
@@ -48,7 +43,6 @@ namespace Codeplex.Data.Internal
         }
 
         // (object x) => (object)((T)x).name
-        [ContractVerification(false)]
         static Func<object, object> CreateGetValue(Type type, string name)
         {
             var x = Expression.Parameter(typeof(object), "x");
@@ -65,7 +59,6 @@ namespace Codeplex.Data.Internal
         }
 
         // (object x, object v) => ((T)x).name = (U)v
-        [ContractVerification(false)]
         static Action<object, object> CreateSetValue(Type type, string name)
         {
             var x = Expression.Parameter(typeof(object), "x");

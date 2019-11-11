@@ -1,7 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Data;
-using System.Diagnostics.Contracts;
 using System.Dynamic;
 
 namespace Codeplex.Data
@@ -13,8 +12,6 @@ namespace Codeplex.Data
 
         public DynamicDataRecord(IDataRecord record)
         {
-            Contract.Requires<ArgumentNullException>(record != null);
-
             this.record = record;
         }
 
