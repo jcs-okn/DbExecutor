@@ -253,7 +253,7 @@ namespace Codeplex.Data
         }
 
         /// <summary>Commit transaction.</summary>
-        public void TransactionComplete()
+        public virtual void TransactionComplete()
         {
             if (transaction != null)
             {
