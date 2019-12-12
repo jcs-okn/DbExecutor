@@ -4,6 +4,7 @@ using System.Data;
 using System.Dynamic;
 using System.Linq;
 using Codeplex.Data.Internal;
+using Codeplex.Data.Options;
 
 namespace Codeplex.Data
 {
@@ -17,6 +18,7 @@ namespace Codeplex.Data
         readonly IsolationLevel isolationLevel;
         IDbTransaction transaction;
         bool isTransactionCompleted = false;
+        public IDbExecutorLogger Logger;
 
         /// <summary>Create standard executor.</summary>
         /// <param name="connection">Database connection.</param>
@@ -26,6 +28,7 @@ namespace Codeplex.Data
             this.connection = connection;
             this.parameterSymbol = parameterSymbol;
             this.isUseTransaction = false;
+            this.Logger = new NullDbExecutorLogger();
         }
 
         /// <summary>Use transaction.</summary>
@@ -38,6 +41,7 @@ namespace Codeplex.Data
             this.parameterSymbol = parameterSymbol;
             this.isUseTransaction = true;
             this.isolationLevel = isolationLevel;
+            this.Logger = new NullDbExecutorLogger();
         }
 
         /// <summary>If connection is not open then open and create command.</summary>
@@ -81,6 +85,8 @@ namespace Codeplex.Data
             }
 
             if (transaction != null) command.Transaction = transaction;
+
+            Logger.PrepareExecute(query, command.Parameters);
 
             return command;
         }
