@@ -24,6 +24,7 @@ namespace DbExecutorTest
     {
         public string dept_no { get; set; }
         public string dept_name { get; set; }
+        public string dept_address { get; set; }
     }
 
     public class Employer
@@ -80,6 +81,7 @@ namespace DbExecutorTest
                 sb.AppendLine("CREATE TABLE departments (");
                 sb.AppendLine("    dept_no     CHAR(4)         NOT NULL,");
                 sb.AppendLine("    dept_name   VARCHAR(40)     NOT NULL,");
+                sb.AppendLine("    dept_address   VARCHAR(40)          ,");
                 sb.AppendLine("    PRIMARY KEY (dept_no)");
                 sb.AppendLine(");");
 

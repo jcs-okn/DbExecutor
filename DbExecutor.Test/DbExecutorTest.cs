@@ -194,6 +194,8 @@ namespace DbExecutorTest
             using (var exec = new DbExecutor(connectionFactory(), IsolationLevel.ReadCommitted))
             {
                 exec.Insert("Departments", new { dept_no = "1", dept_name = "name1" });
+
+                exec.Insert("Departments", new { dept_no = "001", dept_name = "null_test001", dept_address = (string)null });
                 exec.TransactionComplete(); // Transaction Commit
             }
             DbExecutor.Insert(connectionFactory(), "Departments", new { dept_no = "2", dept_name = "name2" });
