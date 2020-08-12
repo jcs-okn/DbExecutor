@@ -61,28 +61,56 @@ namespace Codeplex.Data
 
             if (parameter != null)
             {
-                foreach (var p in AccessorCache.Lookup(parameter.GetType()))
+                if (parameter.GetType() == typeof(ExpandoObject))
                 {
-                    if (!p.IsReadable) continue;
-
-                    var param = command.CreateParameter();
-                    param.ParameterName = p.Name;
-                    param.Value = p.GetValueDirect(parameter) ?? DBNull.Value;
-                    command.Parameters.Add(param);
+                    foreach (var p in (ExpandoObject)parameter)
+                    {
+                        var param = command.CreateParameter();
+                        param.ParameterName = p.Key;
+                        param.Value = p.Value ?? DBNull.Value;
+                        command.Parameters.Add(param);
+                    }
                 }
+                else
+                {
+                    foreach (var p in AccessorCache.Lookup(parameter.GetType()))
+                    {
+                        if (!p.IsReadable) continue;
+
+                        var param = command.CreateParameter();
+                        param.ParameterName = p.Name;
+                        param.Value = p.GetValueDirect(parameter) ?? DBNull.Value;
+                        command.Parameters.Add(param);
+                    }
+                }
+
             }
             if (extraParameter != null)
             {
-                foreach (var p in AccessorCache.Lookup(extraParameter.GetType()))
+                if (parameter.GetType() == typeof(ExpandoObject))
                 {
-                    if (!p.IsReadable) continue;
+                    foreach (var p in (ExpandoObject)extraParameter)
+                    {
+                        var param = command.CreateParameter();
+                        param.ParameterName = "__extra__" + p.Key;
+                        param.Value = p.Value ?? DBNull.Value;
+                        command.Parameters.Add(param);
+                    }
+                }
+                else
+                {
+                    foreach (var p in AccessorCache.Lookup(extraParameter.GetType()))
+                    {
+                        if (!p.IsReadable) continue;
 
-                    var param = command.CreateParameter();
-                    param.ParameterName = "__extra__" + p.Name;
-                    param.Value = p.GetValueDirect(extraParameter) ?? DBNull.Value;
-                    command.Parameters.Add(param);
+                        var param = command.CreateParameter();
+                        param.ParameterName = "__extra__" + p.Name;
+                        param.Value = p.GetValueDirect(extraParameter) ?? DBNull.Value;
+                        command.Parameters.Add(param);
+                    }
                 }
             }
+
 
             if (transaction != null) command.Transaction = transaction;
 
@@ -211,11 +239,22 @@ namespace Codeplex.Data
         /// <returns>Rows affected.</returns>
         public int Insert(string tableName, object insertItem)
         {
-            var propNames = AccessorCache.Lookup(insertItem.GetType())
-                .Where(p => p.IsReadable)
-                .ToArray();
-            var column = string.Join(", ", propNames.Select(p => p.Name));
-            var data = string.Join(", ", propNames.Select(p => parameterSymbol + p.Name));
+            string column = "";
+            string data = "";
+            if (insertItem.GetType() == typeof(ExpandoObject))
+            {
+                column = string.Join(",", ((System.Dynamic.ExpandoObject)insertItem).Select(p => p.Key));
+                data = string.Join(",", ((System.Dynamic.ExpandoObject)insertItem).Select(p => parameterSymbol + p.Key));
+            }
+            else
+            {
+                var propNames = AccessorCache.Lookup(insertItem.GetType())
+                    .Where(p => p.IsReadable)
+                    .ToArray();
+
+                column = string.Join(", ", propNames.Select(p => p.Name));
+                data = string.Join(", ", propNames.Select(p => parameterSymbol + p.Name));
+            }
 
             var query = string.Format("insert into {0} ({1}) values ({2})", tableName, column, data);
 
@@ -229,12 +268,28 @@ namespace Codeplex.Data
         /// <returns>Rows affected.</returns>
         public int Update(string tableName, object updateItem, object whereCondition)
         {
-            var update = string.Join(", ", AccessorCache.Lookup(updateItem.GetType())
-                .Where(p => p.IsReadable)
-                .Select(p => p.Name + " = " + parameterSymbol + p.Name));
+            string update = "";
+            if (updateItem.GetType() == typeof(ExpandoObject))
+            {
+                update = string.Join(",", ((System.Dynamic.ExpandoObject)updateItem).Select(p => p.Key + " = " + parameterSymbol + p.Key));
+            }
+            else
+            {
+                update = string.Join(", ", AccessorCache.Lookup(updateItem.GetType())
+                    .Where(p => p.IsReadable)
+                    .Select(p => p.Name + " = " + parameterSymbol + p.Name));
+            }
 
-            var where = string.Join(" and ", AccessorCache.Lookup(whereCondition.GetType())
+            string where = "";
+            if (whereCondition.GetType() == typeof(ExpandoObject))
+            {
+                where = string.Join(" and ", ((System.Dynamic.ExpandoObject)whereCondition).Select(p => p.Key + " = " + parameterSymbol + "__extra__" + p.Key));
+            }
+            else
+            {
+                where = string.Join(" and ", AccessorCache.Lookup(whereCondition.GetType())
                 .Select(p => p.Name + " = " + parameterSymbol + "__extra__" + p.Name));
+            }
 
             var query = string.Format("update {0} set {1} where {2}", tableName, update, where);
 
@@ -250,8 +305,17 @@ namespace Codeplex.Data
         /// <returns>Rows affected.</returns>
         public int Delete(string tableName, object whereCondition)
         {
-            var where = string.Join(" and ", AccessorCache.Lookup(whereCondition.GetType())
-                .Select(p => p.Name + " = " + parameterSymbol + p.Name));
+            string where = "";
+            if (whereCondition.GetType() == typeof(ExpandoObject))
+            {
+                where = string.Join(" and ", ((System.Dynamic.ExpandoObject)whereCondition).Select(p => p.Key + " = " + parameterSymbol + p.Key));
+            }
+            else
+            {
+                where = string.Join(" and ", AccessorCache.Lookup(whereCondition.GetType())
+                    .Select(p => p.Name + " = " + parameterSymbol + p.Name));
+            }
+                
 
             var query = string.Format("delete from {0} where {1}", tableName, where);
 

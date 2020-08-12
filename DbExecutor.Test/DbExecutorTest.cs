@@ -245,5 +245,41 @@ namespace DbExecutorTest
 
             DbExecutor.Update(connectionFactory(), "Departments", new { dept_name = "Int32" }, new { dept_no = 1 });
         }
+
+
+        [TestMethod]
+        public void ExpandoObjectParameter()
+        {
+            using (var exec = new DbExecutor(connectionFactory(), IsolationLevel.ReadCommitted))
+            {
+                exec.ExecuteNonQuery("delete from Departments");
+                exec.Insert("Departments", new { dept_no = "1", dept_name = "name1" });
+
+                dynamic exoInsert = new System.Dynamic.ExpandoObject();
+                exoInsert.dept_no = 2;
+                exoInsert.dept_name = "name2";
+
+                exec.Insert("Departments", exoInsert);
+
+                dynamic exo = new System.Dynamic.ExpandoObject();
+                exo.dept_no = 2;
+                exec.Select<Departments>("select * from Departments where dept_no = :dept_no", (System.Dynamic.ExpandoObject)exo)
+                    .First()
+                    .Is(x => x.dept_name == "name2");
+
+                dynamic exoUpdate = new System.Dynamic.ExpandoObject();
+                exoUpdate.dept_name = "name3";
+                exec.Update("Departments", (System.Dynamic.ExpandoObject)exoUpdate, (System.Dynamic.ExpandoObject)exo) ;
+
+                exec.Select<Departments>("select * from Departments where dept_no = :dept_no", (System.Dynamic.ExpandoObject)exo)
+                 .First()
+                 .Is(x => x.dept_name == "name3");
+
+                exec.Delete("Departments", (System.Dynamic.ExpandoObject)exo);
+
+                exec.Select<Departments>("select * from Departments where dept_no = :dept_no", (System.Dynamic.ExpandoObject)exo)
+                  .Count().Is(0);
+            }
+        }
     }
 }
