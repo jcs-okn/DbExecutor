@@ -122,9 +122,42 @@ namespace Codeplex.Data
         IEnumerable<IDataRecord> YieldReaderHelper(string query, object parameter, CommandType commandType, CommandBehavior commandBehavior)
         {
             using (var command = PrepareExecute(query, commandType, parameter))
-            using (var reader = command.ExecuteReader(commandBehavior))
             {
-                while (reader.Read()) yield return reader;
+                IDataReader reader;
+                try
+                {
+                    reader = command.ExecuteReader(commandBehavior);
+                }
+                catch (Exception ex)
+                {
+                    Logger.SqlException(query, command.Parameters, ex);
+                    throw;
+                }
+                
+                using (reader)
+                {
+
+                    bool b = false;
+                    while (true)
+                    {
+                        try
+                        {
+                            b = reader.Read();
+                        }
+                        catch (Exception ex)
+                        {
+                            Logger.SqlException(query, command.Parameters, ex);
+                            throw;
+                        }
+                        if (b == false)
+                        {
+                            break;
+                        }
+
+                        yield return reader;
+                    }
+                }
+                    
             }
         }
 
@@ -142,10 +175,41 @@ namespace Codeplex.Data
         IEnumerable<dynamic> YieldReaderDynamicHelper(string query, object parameter, CommandType commandType, CommandBehavior commandBehavior)
         {
             using (var command = PrepareExecute(query, commandType, parameter))
-            using (var reader = command.ExecuteReader(commandBehavior))
             {
-                var record = new DynamicDataRecord(reader); // reference same reader
-                while (reader.Read()) yield return record;
+                IDataReader reader;
+                try
+                {
+                    reader = command.ExecuteReader(commandBehavior);
+                }
+                catch (Exception ex)
+                {
+                    Logger.SqlException(query, command.Parameters, ex);
+                    throw;
+                }
+
+                using (reader)
+                {
+                    DynamicDataRecord record = new DynamicDataRecord(reader); // reference same reader
+                    bool b = false;
+                    while (true)
+                    {
+                        try
+                        {
+                            b = reader.Read();
+                        }
+                        catch (Exception ex)
+                        {
+                            Logger.SqlException(query, command.Parameters, ex);
+                            throw;
+                        }
+                        if (b == false)
+                        {
+                            break;
+                        }
+
+                        yield return record;
+                    }
+                }
             }
         }
 
@@ -169,7 +233,15 @@ namespace Codeplex.Data
         {
             using (var command = PrepareExecute(query, commandType, parameter))
             {
-                return command.ExecuteNonQuery();
+                try
+                {
+                    return command.ExecuteNonQuery();
+                }
+                catch (Exception ex)
+                {
+                    Logger.SqlException(query, command.Parameters, ex);
+                    throw;
+                }
             }
         }
 
@@ -183,7 +255,15 @@ namespace Codeplex.Data
         {
             using (var command = PrepareExecute(query, commandType, parameter))
             {
-                return (T)command.ExecuteScalar();
+                try
+                {
+                    return (T)command.ExecuteScalar();
+                }
+                catch (Exception ex)
+                {
+                    Logger.SqlException(query, command.Parameters, ex);
+                    throw;
+                }
             }
         }
 
@@ -295,7 +375,15 @@ namespace Codeplex.Data
 
             using (var command = PrepareExecute(query, CommandType.Text, updateItem, whereCondition))
             {
-                return command.ExecuteNonQuery();
+                try
+                {
+                    return command.ExecuteNonQuery();
+                }
+                catch (Exception ex)
+                {
+                    Logger.SqlException(ex);
+                    throw;
+                }
             }
         }
 

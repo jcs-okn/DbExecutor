@@ -10,5 +10,13 @@ namespace Codeplex.Data.Options {
         public void PrepareExecute(string query, IDataParameterCollection parameters)
         {
         }
+
+        public void SqlException(Exception ex)
+        {
+        }
+
+        public void SqlException(string query, IDataParameterCollection parameters, Exception ex)
+        {
+        }
     }
 }
