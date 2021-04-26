@@ -87,7 +87,7 @@ namespace Codeplex.Data
             }
             if (extraParameter != null)
             {
-                if (parameter.GetType() == typeof(ExpandoObject))
+                if (extraParameter.GetType() == typeof(ExpandoObject))
                 {
                     foreach (var p in (ExpandoObject)extraParameter)
                     {

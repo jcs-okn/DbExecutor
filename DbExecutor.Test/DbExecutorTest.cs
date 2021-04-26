@@ -269,7 +269,9 @@ namespace DbExecutorTest
 
                 dynamic exoUpdate = new System.Dynamic.ExpandoObject();
                 exoUpdate.dept_name = "name3";
-                exec.Update("Departments", (System.Dynamic.ExpandoObject)exoUpdate, (System.Dynamic.ExpandoObject)exo) ;
+                exec.Update("Departments", (System.Dynamic.ExpandoObject)exoUpdate, (System.Dynamic.ExpandoObject)exo);
+                exec.Update("Departments", (System.Dynamic.ExpandoObject)exoUpdate, new { dept_no = 2 });
+                exec.Update("Departments", new { dept_no = 2, dept_name = "name3" }, (System.Dynamic.ExpandoObject)exo);
 
                 exec.Select<Departments>("select * from Departments where dept_no = :dept_no", (System.Dynamic.ExpandoObject)exo)
                  .First()
