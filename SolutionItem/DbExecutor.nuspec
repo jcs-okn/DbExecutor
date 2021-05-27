@@ -15,8 +15,8 @@
     </metadata>
     <files>
         <file src="../SolutionItem/Install.ps1" target="tools" />
-        <file src="../ReleaseBinary/DbExecutor.dll" target="lib\Net40" />
-        <file src="../ReleaseBinary/DbExecutor.pdb" target="lib\Net40" />
-        <file src="../ReleaseBinary/DbExecutor.xml" target="lib\Net40" />
+        <file src="../ReleaseBinary/lib/Net40/DbExecutor.dll" target="lib\Net40" />
+        <file src="../ReleaseBinary/lib/Net40/DbExecutor.pdb" target="lib\Net40" />
+        <file src="../ReleaseBinary/lib/Net40/DbExecutor.xml" target="lib\Net40" />
     </files>
 </package>
