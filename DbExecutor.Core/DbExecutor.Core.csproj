@@ -1,0 +1,33 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFramework>netcoreapp2.0</TargetFramework>
+    <AssemblyName>DbExecutor</AssemblyName>
+    <RootNamespace>DbExecutor</RootNamespace>
+  </PropertyGroup>
+
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|AnyCPU'">
+    <DocumentationFile>DbExecutor.xml</DocumentationFile>
+    <OutputPath>..\ReleaseBinary\lib\</OutputPath>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <Compile Include="..\DbExecutor\DbExecutor.cs" Link="DbExecutor.cs" />
+    <Compile Include="..\DbExecutor\DbExecutor.Static.cs" Link="DbExecutor.Static.cs" />
+    <Compile Include="..\DbExecutor\DynamicDataRecord.cs" Link="DynamicDataRecord.cs" />
+    <Compile Include="..\DbExecutor\Internal\AccessorCache.cs" Link="Internal\AccessorCache.cs" />
+    <Compile Include="..\DbExecutor\Internal\ExpressionAccessor.cs" Link="Internal\ExpressionAccessor.cs" />
+    <Compile Include="..\DbExecutor\Internal\IKeyIndexed.cs" Link="Internal\IKeyIndexed.cs" />
+    <Compile Include="..\DbExecutor\Internal\IMemberAccessor.cs" Link="Internal\IMemberAccessor.cs" />
+    <Compile Include="..\DbExecutor\Internal\KeyIndexed.cs" Link="Internal\KeyIndexed.cs" />
+    <Compile Include="..\DbExecutor\Internal\ReflectionAccessor.cs" Link="Internal\ReflectionAccessor.cs" />
+    <Compile Include="..\DbExecutor\Options\IDbExecutorLogger.cs" Link="Options\IDbExecutorLogger.cs" />
+    <Compile Include="..\DbExecutor\Options\NullDbExecutorLogger.cs" Link="Options\NullDbExecutorLogger.cs" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <Folder Include="Internal\" />
+    <Folder Include="Options\" />
+  </ItemGroup>
+
+</Project>

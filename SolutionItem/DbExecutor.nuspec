@@ -2,7 +2,7 @@
 <package xmlns="http://schemas.microsoft.com/packaging/2010/07/nuspec.xsd">
     <metadata>
         <id>JcsOkn.DbExecutor</id>
-        <version>0.0.0.9</version>
+        <version>0.0.1.0</version>
         <title>JcsOkn.DbExecutor</title>
         <authors>k-oshiro</authors>
         <owners>k-oshiro</owners>
@@ -18,5 +18,8 @@
         <file src="../ReleaseBinary/lib/Net40/DbExecutor.dll" target="lib\Net40" />
         <file src="../ReleaseBinary/lib/Net40/DbExecutor.pdb" target="lib\Net40" />
         <file src="../ReleaseBinary/lib/Net40/DbExecutor.xml" target="lib\Net40" />
+        <file src="../ReleaseBinary/lib/netcoreapp2.0/DbExecutor.dll" target="lib\netcoreapp2.0" />
+        <file src="../ReleaseBinary/lib/netcoreapp2.0/DbExecutor.pdb" target="lib\netcoreapp2.0" />
+        <file src="../ReleaseBinary/lib/netcoreapp2.0/DbExecutor.xml" target="lib\netcoreapp2.0" />
     </files>
 </package>

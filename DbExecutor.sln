@@ -1,6 +1,8 @@
 ﻿
-Microsoft Visual Studio Solution File, Format Version 11.00
-# Visual Studio 2010
+Microsoft Visual Studio Solution File, Format Version 12.00
+# Visual Studio Version 16
+VisualStudioVersion = 16.0.30804.86
+MinimumVisualStudioVersion = 10.0.40219.1
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "DbExecutor", "DbExecutor\DbExecutor.csproj", "{8FBFCC13-0FD6-48B0-898C-18503665B5C2}"
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "DbExecutor.Test", "DbExecutor.Test\DbExecutor.Test.csproj", "{B39F0E4E-E00B-49B2-8829-6D044CAD1A03}"
@@ -16,10 +18,9 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "SolutionItem", "SolutionIte
 		SolutionItem\zippack.fsx = SolutionItem\zippack.fsx
 	EndProjectSection
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "DbExecutor.Core", "DbExecutor.Core\DbExecutor.Core.csproj", "{38BEEC1E-AF07-43E8-BB5A-69C3D4DB8A1B}"
+EndProject
 Global
-	GlobalSection(TestCaseManagementSettings) = postSolution
-		CategoryFile = DbExecutor.vsmdi
-	EndGlobalSection
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
 		Debug|Mixed Platforms = Debug|Mixed Platforms
@@ -49,8 +50,26 @@ Global
 		{B39F0E4E-E00B-49B2-8829-6D044CAD1A03}.Release|Mixed Platforms.ActiveCfg = Release|Any CPU
 		{B39F0E4E-E00B-49B2-8829-6D044CAD1A03}.Release|Mixed Platforms.Build.0 = Release|Any CPU
 		{B39F0E4E-E00B-49B2-8829-6D044CAD1A03}.Release|x86.ActiveCfg = Release|Any CPU
+		{38BEEC1E-AF07-43E8-BB5A-69C3D4DB8A1B}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{38BEEC1E-AF07-43E8-BB5A-69C3D4DB8A1B}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{38BEEC1E-AF07-43E8-BB5A-69C3D4DB8A1B}.Debug|Mixed Platforms.ActiveCfg = Debug|Any CPU
+		{38BEEC1E-AF07-43E8-BB5A-69C3D4DB8A1B}.Debug|Mixed Platforms.Build.0 = Debug|Any CPU
+		{38BEEC1E-AF07-43E8-BB5A-69C3D4DB8A1B}.Debug|x86.ActiveCfg = Debug|Any CPU
+		{38BEEC1E-AF07-43E8-BB5A-69C3D4DB8A1B}.Debug|x86.Build.0 = Debug|Any CPU
+		{38BEEC1E-AF07-43E8-BB5A-69C3D4DB8A1B}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{38BEEC1E-AF07-43E8-BB5A-69C3D4DB8A1B}.Release|Any CPU.Build.0 = Release|Any CPU
+		{38BEEC1E-AF07-43E8-BB5A-69C3D4DB8A1B}.Release|Mixed Platforms.ActiveCfg = Release|Any CPU
+		{38BEEC1E-AF07-43E8-BB5A-69C3D4DB8A1B}.Release|Mixed Platforms.Build.0 = Release|Any CPU
+		{38BEEC1E-AF07-43E8-BB5A-69C3D4DB8A1B}.Release|x86.ActiveCfg = Release|Any CPU
+		{38BEEC1E-AF07-43E8-BB5A-69C3D4DB8A1B}.Release|x86.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
+	EndGlobalSection
+	GlobalSection(ExtensibilityGlobals) = postSolution
+		SolutionGuid = {67223677-09F9-4FAA-8C70-5FF547E7F94A}
+	EndGlobalSection
+	GlobalSection(TestCaseManagementSettings) = postSolution
+		CategoryFile = DbExecutor.vsmdi
 	EndGlobalSection
 EndGlobal
