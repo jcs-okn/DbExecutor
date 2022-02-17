@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Data;
 using System.Dynamic;
 using System.Linq;
+using System.Threading.Tasks;
 using Codeplex.Data.Internal;
 using Codeplex.Data.Options;
 
@@ -244,6 +245,24 @@ namespace Codeplex.Data
                 }
             }
         }
+
+#if NETCOREAPP
+        public async Task<int> ExecuteNonQueryAsync(string query, object parameter = null, CommandType commandType = CommandType.Text)
+        {
+            using (var command = PrepareExecute(query, commandType, parameter))
+            {
+                try
+                {
+                    return await ((System.Data.Common.DbCommand)command).ExecuteNonQueryAsync();
+                }
+                catch (Exception ex)
+                {
+                    Logger.SqlException(query, command.Parameters, ex);
+                    throw;
+                }
+            }
+        }
+#endif
 
         /// <summary>Executes and returns the first column, first row.</summary>
         /// <typeparam name="T">Result type.</typeparam>

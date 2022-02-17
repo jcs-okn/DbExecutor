@@ -2,12 +2,12 @@
 <package xmlns="http://schemas.microsoft.com/packaging/2010/07/nuspec.xsd">
     <metadata>
         <id>JcsOkn.DbExecutor</id>
-        <version>0.0.1.0</version>
+        <version>0.0.1.1</version>
         <title>JcsOkn.DbExecutor</title>
         <authors>k-oshiro</authors>
         <owners>k-oshiro</owners>
         <requireLicenseAcceptance>false</requireLicenseAcceptance>
-        <description>This is forked from DbExecutor. Simple and Lightweight Database Executor for .NET 4 Client Profile and all ADO.NET DbProviders. Features: set command parameter by AnonymousType, auto type mapping, dynamic IDataRecord accessor,transaction, basic Select/Insert/Delete/Update query build.</description>
+        <description>This is forked from DbExecutor. Simple and Lightweight Database Executor for .NET 4 Client Profile and dotnet core and all ADO.NET DbProviders. Features: set command parameter by AnonymousType, auto type mapping, dynamic IDataRecord accessor,transaction, basic Select/Insert/Delete/Update query build.</description>
         <language>en-US</language>
         <licenseUrl>https://github.com/jcs-okn/DbExecutor</licenseUrl>
         <projectUrl>https://github.com/jcs-okn/DbExecutor</projectUrl>
