@@ -2,6 +2,7 @@
 using System.Data;
 using System.Data.SQLite;
 using System.Linq;
+using System.Threading.Tasks;
 using Codeplex.Data;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
 
@@ -108,6 +109,27 @@ namespace DbExecutorTest
         }
 
         [TestMethod]
+        public async Task ExecuteNonQueryAsync()
+        {
+            using (var exec = new DbExecutor(connectionFactory(), IsolationLevel.ReadCommitted))
+            {
+                var affected = await exec.ExecuteNonQueryAsync(
+                    "insert into Departments(dept_no, dept_name) values(@dept_no, @dept_name)",
+                    new { dept_no = "d1", dept_name = "dept_name" });
+                affected.Is(1);
+
+                var f = exec.Select<Departments>("select * from Departments order by dept_no desc").First();
+                f.Is(t => t.dept_name == "dept_name");
+
+                // Transaction Uncommit
+            }
+
+            // Transaction Rollback test.
+            var xs = DbExecutor.Select<Departments>(connectionFactory(), "select * from Departments where dept_no = 'd1'").ToArray();
+            xs.Count().Is(0);
+        }
+
+        [TestMethod]
         public void ExecuteScalar()
         {
             using (var exec = new DbExecutor(connectionFactory()))
@@ -119,7 +141,7 @@ namespace DbExecutorTest
             }
 
             DbExecutor.ExecuteScalar<string>(connectionFactory(), "select date('now')")
-                .Is(DateTime.Now.ToString("yyyy-MM-dd"));
+                .Is(DateTime.UtcNow.ToString("yyyy-MM-dd"));
 
             DbExecutor.ExecuteScalar<object>(connectionFactory(), "select null")
                 .Is(DBNull.Value);

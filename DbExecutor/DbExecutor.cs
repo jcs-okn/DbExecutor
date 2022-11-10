@@ -360,6 +360,30 @@ namespace Codeplex.Data
             return ExecuteNonQuery(query, insertItem);
         }
 
+        public async Task<int> InsertAsync(string tableName, object insertItem, CancellationToken token)
+        {
+            string column = "";
+            string data = "";
+            if (insertItem.GetType() == typeof(ExpandoObject))
+            {
+                column = string.Join(",", ((System.Dynamic.ExpandoObject)insertItem).Select(p => p.Key));
+                data = string.Join(",", ((System.Dynamic.ExpandoObject)insertItem).Select(p => parameterSymbol + p.Key));
+            }
+            else
+            {
+                var propNames = AccessorCache.Lookup(insertItem.GetType())
+                    .Where(p => p.IsReadable)
+                    .ToArray();
+
+                column = string.Join(", ", propNames.Select(p => p.Name));
+                data = string.Join(", ", propNames.Select(p => parameterSymbol + p.Name));
+            }
+
+            var query = string.Format("insert into {0} ({1}) values ({2})", tableName, column, data);
+
+            return await ExecuteNonQueryAsync(query, insertItem, CommandType.Text, token);
+        }
+
         /// <summary>Update by object's PropertyName.</summary>
         /// <param name="tableName">Target database's table.</param>
         /// <param name="updateItem">Table's column name extracted from PropertyName.</param>
