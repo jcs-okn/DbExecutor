@@ -237,6 +237,47 @@ namespace DbExecutorTest
         }
 
         [TestMethod]
+        public void InsertMultiple()
+        {
+            DbExecutor.Delete(connectionFactory(), "Departments", new { dept_no = "1" });
+            DbExecutor.Delete(connectionFactory(), "Departments", new { dept_no = "2" });
+            using (var exec = new DbExecutor(connectionFactory(), IsolationLevel.ReadCommitted))
+            {
+                var objList = new System.Collections.Generic.List<object>();
+                objList.Add(
+                    new
+                    {
+                        dept_no = "1",
+                        dept_name = "multiple test name1"
+                    });
+
+                objList.Add(
+                    new
+                    {
+                        dept_no = "2",
+                        dept_name = "multiple test name2"
+                    });
+
+                exec.InsertMultiple("Departments", objList);
+
+                exec.TransactionComplete(); // Transaction Commit
+            }
+
+            DbExecutor.Select<Departments>(connectionFactory(),
+                    "select * from Departments where dept_name like @dept_name", new { dept_name = "multiple%" })
+                .Count()
+                .Is(2);
+
+            DbExecutor.Delete(connectionFactory(), "Departments", new { dept_name = "multiple test name1" });
+            DbExecutor.Delete(connectionFactory(), "Departments", new { dept_name = "multiple test name2" });
+
+            DbExecutor.Select<Departments>(connectionFactory(),
+                 "select * from Departments where dept_name like @dept_name", new { dept_name = "multiple%" })
+             .Count()
+             .Is(0);
+        }
+
+        [TestMethod]
         public void Update()
         {
             DbExecutor.Delete(connectionFactory(), "Departments", new { dept_no = "1" });

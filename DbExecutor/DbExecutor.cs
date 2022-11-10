@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Data;
 using System.Dynamic;
 using System.Linq;
+using System.Threading;
 using System.Threading.Tasks;
 using Codeplex.Data.Internal;
 using Codeplex.Data.Options;
@@ -115,7 +116,7 @@ namespace Codeplex.Data
 
             if (transaction != null) command.Transaction = transaction;
 
-            Logger.PrepareExecute(query, command.Parameters);
+            Logger.PrepareExecute(command.CommandText, command.Parameters);
 
             return command;
         }
@@ -246,14 +247,13 @@ namespace Codeplex.Data
             }
         }
 
-#if NETCOREAPP
-        public async Task<int> ExecuteNonQueryAsync(string query, object parameter = null, CommandType commandType = CommandType.Text)
+        public async Task<int> ExecuteNonQueryAsync(string query, object parameter = null, CommandType commandType = CommandType.Text, CancellationToken token = default)
         {
             using (var command = PrepareExecute(query, commandType, parameter))
             {
                 try
                 {
-                    return await ((System.Data.Common.DbCommand)command).ExecuteNonQueryAsync();
+                    return await ((System.Data.Common.DbCommand)command).ExecuteNonQueryAsync(token);
                 }
                 catch (Exception ex)
                 {
@@ -262,7 +262,6 @@ namespace Codeplex.Data
                 }
             }
         }
-#endif
 
         /// <summary>Executes and returns the first column, first row.</summary>
         /// <typeparam name="T">Result type.</typeparam>
@@ -358,6 +357,92 @@ namespace Codeplex.Data
             var query = string.Format("insert into {0} ({1}) values ({2})", tableName, column, data);
 
             return ExecuteNonQuery(query, insertItem);
+        }
+
+        public int InsertMultiple(string tableName, List<object> insertItems)
+        {
+            string column = "";
+            foreach (var insertItem in insertItems)
+            {
+                if (insertItem.GetType() == typeof(ExpandoObject))
+                {
+                    column = string.Join(",", ((System.Dynamic.ExpandoObject)insertItem).Select(p => p.Key));
+                }
+                else
+                {
+                    var propNames = AccessorCache.Lookup(insertItem.GetType())
+                        .Where(p => p.IsReadable)
+                        .ToArray();
+
+                    column = string.Join(", ", propNames.Select(p => p.Name));
+                }
+                break;
+            }
+
+            var items = new List<string>();
+            dynamic exo = new System.Dynamic.ExpandoObject();
+            foreach (var record in insertItems.Select((item, index) => new { item, index }))
+            {
+                var insertItem = record.item;
+                if (insertItem.GetType() == typeof(ExpandoObject))
+                {
+                    var data = new List<string>();
+                    foreach (var p in ((System.Dynamic.ExpandoObject)insertItem))
+                    {
+                        var key = p.Key + $"__{record.index}";
+                        ((IDictionary<string, object>)exo).Add(key, p.Value);
+
+                        data.Add(parameterSymbol + key);
+                        
+                    }
+
+                    items.Add(string.Join(",", data));
+
+                    if (insertItem.GetType() == typeof(ExpandoObject))
+                    {
+                        column = string.Join(",", ((System.Dynamic.ExpandoObject)insertItem).Select(p => p.Key));
+                    }
+                    else
+                    {
+                        var propNames = AccessorCache.Lookup(insertItem.GetType())
+                            .Where(p => p.IsReadable)
+                            .ToArray();
+
+                        column = string.Join(", ", propNames.Select(p => p.Name));
+                    }
+
+                }
+                else
+                {
+                    var data = new List<string>();
+                    foreach (var p in AccessorCache.Lookup(insertItem.GetType()))
+                    {
+                        if (!p.IsReadable) continue;
+
+                        var key = p.Name + $"__{record.index}";
+                        ((IDictionary<string, object>)exo).Add(key, p.GetValueDirect(insertItem));
+
+                        data.Add(parameterSymbol + key);
+                    }
+                    items.Add(string.Join(",", data));
+                }
+            }
+
+            var val = string.Join("),(", items);
+            var query = $"insert into {tableName} ({column}) values ({val})";
+
+            using (var command = PrepareExecute(query, CommandType.Text, exo))
+            {
+                try
+                {
+                    return command.ExecuteNonQuery();
+                }
+                catch (Exception ex)
+                {
+                    Logger.SqlException(query, command.Parameters, ex);
+                    throw;
+                }
+            }
         }
 
         public async Task<int> InsertAsync(string tableName, object insertItem, CancellationToken token)
