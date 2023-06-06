@@ -140,23 +140,33 @@ namespace Codeplex.Data
                 {
 
                     bool b = false;
-                    while (true)
+                    var sw = new System.Diagnostics.Stopwatch();
+                    try
                     {
-                        try
+                        sw.Start();
+                        while (true)
                         {
-                            b = reader.Read();
-                        }
-                        catch (Exception ex)
-                        {
-                            Logger.SqlException(query, command.Parameters, ex);
-                            throw;
-                        }
-                        if (b == false)
-                        {
-                            break;
-                        }
+                            try
+                            {
+                                b = reader.Read();
+                            }
+                            catch (Exception ex)
+                            {
+                                Logger.SqlException(query, command.Parameters, ex);
+                                throw;
+                            }
+                            if (b == false)
+                            {
+                                break;
+                            }
 
-                        yield return reader;
+                            yield return reader;
+                        }
+                    }
+                    finally
+                    {
+                        sw.Stop();
+                        Logger.YieldReaderFinished(command.CommandText, command.Parameters, sw.ElapsedMilliseconds);
                     }
                 }
                     

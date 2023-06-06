@@ -18,5 +18,8 @@ namespace Codeplex.Data.Options {
         public void SqlException(string query, IDataParameterCollection parameters, Exception ex)
         {
         }
+        public void YieldReaderFinished(string query, IDataParameterCollection parameters, double elapsed)
+        {
+        }
     }
 }
