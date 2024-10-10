@@ -437,9 +437,19 @@ namespace Codeplex.Data
                     items.Add(string.Join(",", data));
                 }
             }
+            string query = "";
 
-            var val = string.Join("),(", items);
-            var query = $"insert into {tableName} ({column}) values ({val})";
+            if (connection.GetType().Name == "OracleConnection")
+            {
+                var x = items.Select(d => $"INTO {tableName} ({column}) VALUES ({d}) ");
+                var val = string.Join(" ", x);
+                query = $"INSERT ALL {val} SELECT 1 FROM DUAL";
+            }
+            else
+            {
+                var val = string.Join("),(", items);
+                query = $"insert into {tableName} ({column}) values ({val})";
+            }
 
             using (var command = PrepareExecute(query, CommandType.Text, exo))
             {
