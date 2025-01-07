@@ -236,6 +236,40 @@ namespace Codeplex.Data
             return YieldReaderDynamicHelper(query, parameter, commandType, commandBehavior);
         }
 
+        private void AddCommandParameter(object parameter, IDbCommand command, ParameterDirection? direction = null)
+        {
+            if (parameter.GetType() == typeof(ExpandoObject))
+            {
+                foreach (var p in (ExpandoObject)parameter)
+                {
+                    var param = command.CreateParameter();
+                    param.ParameterName = p.Key;
+                    param.Value = p.Value ?? DBNull.Value;
+                    if (direction != null)
+                    {
+                        param.Direction = direction.Value;
+                    }
+                    command.Parameters.Add(param);
+                }
+            }
+            else
+            {
+                foreach (var p in AccessorCache.Lookup(parameter.GetType()))
+                {
+                    if (!p.IsReadable) continue;
+
+                    var param = command.CreateParameter();
+                    param.ParameterName = p.Name;
+                    param.Value = p.GetValueDirect(parameter) ?? DBNull.Value;
+                    if (direction != null)
+                    {
+                        param.Direction = direction.Value;
+                    }
+                    command.Parameters.Add(param);
+                }
+            }
+        }
+
         /// <summary>Executes and returns the number of rows affected.</summary>
         /// <param name="query">SQL code.</param>
         /// <param name="parameter">PropertyName parameterized to PropertyName. if null then no use parameter.</param>
@@ -248,6 +282,56 @@ namespace Codeplex.Data
                 try
                 {
                     return command.ExecuteNonQuery();
+                }
+                catch (Exception ex)
+                {
+                    Logger.SqlException(query, command.Parameters, ex);
+                    throw;
+                }
+            }
+        }
+
+
+        /// <summary>Executes procedure and returns paramter.</summary>
+        /// <param name="query">Procedure name.</param>
+        /// <param name="inputParameter">ParameterDirection is Input parameter.</param>
+        /// <param name="outputParameter">ParameterDirection is Output parameter.</param>
+        /// <param name="inOutParameter">ParameterDirection is InputOutput parameter.</param>
+        /// <param name="returnParameter">ParameterDirection is ReturnValue parameter.</param>
+        /// <returns>Rows affected.</returns>
+        public IDictionary<string, object> ExecuteProcedure(string query, object inputParameter = null, object outputParameter = null, object inOutParameter = null, object returnParameter = null)
+        {
+            using (var command = PrepareExecute(query, CommandType.StoredProcedure, inputParameter))
+            {
+                if (outputParameter != null)
+                {
+                    AddCommandParameter(outputParameter, command, ParameterDirection.Output);
+                }
+
+                if (inOutParameter != null)
+                {
+                    AddCommandParameter(inOutParameter, command, ParameterDirection.InputOutput);
+                }
+
+                if (returnParameter != null)
+                {
+                    AddCommandParameter(returnParameter, command, ParameterDirection.ReturnValue);
+                }
+
+                try
+                {
+                    command.ExecuteNonQuery();
+
+                    IDictionary<string, object> expando = new ExpandoObject();
+                    command.Parameters.Cast<IDbDataParameter>()
+                        .Where(d => d.Direction == ParameterDirection.Output || d.Direction == ParameterDirection.InputOutput || d.Direction == ParameterDirection.ReturnValue)
+                        .ToList()
+                        .ForEach(x =>
+                        {
+                            expando.Add(x.ParameterName, x.Value);
+                        });
+
+                    return expando;
                 }
                 catch (Exception ex)
                 {

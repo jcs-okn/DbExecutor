@@ -49,6 +49,15 @@
             <param name="commandType">Command Type.</param>
             <returns>Rows affected.</returns>
         </member>
+        <member name="M:Codeplex.Data.DbExecutor.ExecuteProcedure(System.String,System.Object,System.Object,System.Object,System.Object)">
+            <summary>Executes procedure and returns paramter.</summary>
+            <param name="query">Procedure name.</param>
+            <param name="inputParameter">ParameterDirection is Input parameter.</param>
+            <param name="outputParameter">ParameterDirection is Output parameter.</param>
+            <param name="inOutParameter">ParameterDirection is InputOutput parameter.</param>
+            <param name="returnParameter">ParameterDirection is ReturnValue parameter.</param>
+            <returns>Rows affected.</returns>
+        </member>
         <member name="M:Codeplex.Data.DbExecutor.ExecuteScalar``1(System.String,System.Object,System.Data.CommandType)">
             <summary>Executes and returns the first column, first row.</summary>
             <typeparam name="T">Result type.</typeparam>
