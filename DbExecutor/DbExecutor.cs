@@ -341,6 +341,35 @@ namespace Codeplex.Data
             }
         }
 
+        public IDictionary<string, object> ExecuteProcedure(string query, Action<IDbCommand> addComandParameterAction)
+        {
+            using (var command = PrepareExecute(query, CommandType.StoredProcedure, null))
+            {
+                addComandParameterAction.Invoke(command);
+
+                try
+                {
+                    command.ExecuteNonQuery();
+
+                    IDictionary<string, object> expando = new ExpandoObject();
+                    command.Parameters.Cast<IDbDataParameter>()
+                        .Where(d => d.Direction == ParameterDirection.Output || d.Direction == ParameterDirection.InputOutput || d.Direction == ParameterDirection.ReturnValue)
+                        .ToList()
+                        .ForEach(x =>
+                        {
+                            expando.Add(x.ParameterName, x.Value);
+                        });
+
+                    return expando;
+                }
+                catch (Exception ex)
+                {
+                    Logger.SqlException(query, command.Parameters, ex);
+                    throw;
+                }
+            }
+        }
+
         public async Task<int> ExecuteNonQueryAsync(string query, object parameter = null, CommandType commandType = CommandType.Text, CancellationToken token = default)
         {
             using (var command = PrepareExecute(query, commandType, parameter))
