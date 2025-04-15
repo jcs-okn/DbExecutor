@@ -18,6 +18,8 @@ namespace Codeplex.Data
         // Transaction
         readonly bool isUseTransaction;
         readonly IsolationLevel isolationLevel;
+        readonly DbExecutorOption option;
+
         IDbTransaction transaction;
         bool isTransactionCompleted = false;
         public IDbExecutorLogger Logger;
@@ -31,6 +33,7 @@ namespace Codeplex.Data
             this.parameterSymbol = parameterSymbol;
             this.isUseTransaction = false;
             this.Logger = new NullDbExecutorLogger();
+            this.option = null;
         }
 
         /// <summary>Use transaction.</summary>
@@ -44,6 +47,18 @@ namespace Codeplex.Data
             this.isUseTransaction = true;
             this.isolationLevel = isolationLevel;
             this.Logger = new NullDbExecutorLogger();
+            this.option = null;
+        }
+
+        public DbExecutor(IDbConnection connection, DbExecutorOption option)
+        {
+            this.connection = connection;
+            this.parameterSymbol = option.ParameterSymbol;
+            this.isUseTransaction = option.IsUseTransaction;
+            this.Logger = new NullDbExecutorLogger();
+            this.option = option;
+
+            if (this.isUseTransaction) this.isolationLevel = option.IsolationLevel;
         }
 
         /// <summary>If connection is not open then open and create command.</summary>
@@ -414,7 +429,7 @@ namespace Codeplex.Data
         /// <param name="parameter">PropertyName parameterized to PropertyName. if null then no use parameter.</param>
         /// <param name="commandType">Command Type.</param>
         /// <returns>Mapped instances.</returns>
-        public IEnumerable<T> Select<T>(string query, object parameter = null, CommandType commandType = CommandType.Text) where T : new()
+        public IEnumerable<T> Select<T>(string query, object parameter = null, CommandType commandType = CommandType.Text, IDbExecutorFormatter formatter = null) where T : new()
         {
             var accessors = AccessorCache.Lookup(typeof(T));
             return ExecuteReader(query, parameter, commandType, CommandBehavior.SequentialAccess)
@@ -428,7 +443,19 @@ namespace Codeplex.Data
                         if (dr.IsDBNull(i)) continue;
 
                         var accessor = accessors[dr.GetName(i)];
-                        if (accessor != null && accessor.IsWritable) accessor.SetValueDirect(result, dr[i]);
+                        if (accessor != null && accessor.IsWritable)
+                        {
+                            IDbExecutorFormatter fmt = (formatter != null) ? formatter : option?.ExecuteReaderFormatter;
+                            if (fmt != null)
+                            {
+                                var value = fmt.Format(dr.GetName(i), dr[i]);
+                                accessor.SetValueDirect(result, value);
+                            }
+                            else
+                            {
+                                accessor.SetValueDirect(result, dr[i]);
+                            }
+                        }
                     }
                     return (T)result;
                 });
@@ -439,7 +466,7 @@ namespace Codeplex.Data
         /// <param name="parameter">PropertyName parameterized to PropertyName. if null then no use parameter.</param>
         /// <param name="commandType">Command Type.</param>
         /// <returns>Mapped results(dynamic type is ExpandoObject).</returns>
-        public IEnumerable<dynamic> SelectDynamic(string query, object parameter = null, CommandType commandType = CommandType.Text)
+        public IEnumerable<dynamic> SelectDynamic(string query, object parameter = null, CommandType commandType = CommandType.Text, IDbExecutorFormatter formatter = null)
         {
             return ExecuteReader(query, parameter, commandType, CommandBehavior.SequentialAccess)
                 .Select(dr =>
@@ -448,6 +475,15 @@ namespace Codeplex.Data
                     for (int i = 0; i < dr.FieldCount; i++)
                     {
                         var value = dr.IsDBNull(i) ? null : dr.GetValue(i);
+                        if (formatter != null)
+                        {
+                            value = formatter.Format(dr.GetName(i), value);
+                        }
+                        else if (option?.ExecuteReaderFormatter != null)
+                        {
+                            value = option.ExecuteReaderFormatter.Format(dr.GetName(i), value);
+                        }
+
                         expando.Add(dr.GetName(i), value);
                     }
                     return expando;

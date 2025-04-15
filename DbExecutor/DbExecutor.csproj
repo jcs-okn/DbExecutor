@@ -110,6 +110,8 @@
     <Compile Include="Internal\IMemberAccessor.cs" />
     <Compile Include="Internal\ReflectionAccessor.cs" />
     <Compile Include="Internal\IKeyIndexed.cs" />
+    <Compile Include="Options\DbExecutorOption.cs" />
+    <Compile Include="Options\IDbExecutorFormatter.cs" />
     <Compile Include="Options\IDbExecutorLogger.cs" />
     <Compile Include="Options\NullDbExecutorLogger.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />

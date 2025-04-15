@@ -21,6 +21,8 @@
     <Compile Include="..\DbExecutor\Internal\IMemberAccessor.cs" Link="Internal\IMemberAccessor.cs" />
     <Compile Include="..\DbExecutor\Internal\KeyIndexed.cs" Link="Internal\KeyIndexed.cs" />
     <Compile Include="..\DbExecutor\Internal\ReflectionAccessor.cs" Link="Internal\ReflectionAccessor.cs" />
+    <Compile Include="..\DbExecutor\Options\DbExecutorOption.cs" Link="Options\DbExecutorOption.cs" />
+    <Compile Include="..\DbExecutor\Options\IDbExecutorFormatter.cs" Link="Options\IDbExecutorFormatter.cs" />
     <Compile Include="..\DbExecutor\Options\IDbExecutorLogger.cs" Link="Options\IDbExecutorLogger.cs" />
     <Compile Include="..\DbExecutor\Options\NullDbExecutorLogger.cs" Link="Options\NullDbExecutorLogger.cs" />
   </ItemGroup>
